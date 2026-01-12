@@ -1,0 +1,18 @@
+[green_agent]
+endpoint = "http://127.0.0.1:8081"
+cmd = "python src/green_car_bench_agent/server.py --host 127.0.0.1 --port 8081"
+
+[[participants]]
+role = "agent"
+endpoint = "http://127.0.0.1:8080"
+cmd = "python src/purple_car_bench_agent/server.py --host 127.0.0.1 --port 8080 --agent-llm anthropic/claude-haiku-4-5-20251001"
+
+[config]
+num_trials = 2
+tasks_base_start_index = 0
+tasks_base_end_index = 1
+tasks_hallucination_start_index = 0
+tasks_hallucination_end_index = 0
+tasks_disambiguation_start_index = 0
+tasks_disambiguation_end_index = 0
+max_steps = 20
