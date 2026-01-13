@@ -46,9 +46,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from logging_utils import configure_logger
 sys.path.pop(0)
 
-# Import run.py from external/car_bench (not in package)
-external_car_bench = Path(__file__).parent.parent.parent / "external" / "car_bench"
-sys.path.insert(0, str(external_car_bench))
+# Import run.py from car-bench repo root
+car_bench_repo = Path(__file__).parent.parent.parent / "scenarios" / "car-bench" / "car-bench"
+sys.path.insert(0, str(car_bench_repo))
 from run import run as run_benchmark
 sys.path.pop(0)
 
@@ -270,8 +270,9 @@ def calculate_evaluation_results(
     Returns:
         Tuple of (result_data dict, summary string)
     """
-    # Import analysis functions
-    sys.path.insert(0, str(external_car_bench))
+    # Import analysis functions from car-bench repo root
+    car_bench_repo = Path(__file__).parent.parent.parent / "scenarios" / "car-bench" / "car-bench"
+    sys.path.insert(0, str(car_bench_repo))
     try:
         from analyze_results import (
             organize_data_by_task_and_trial,
@@ -572,6 +573,11 @@ class CARBenchEvaluator(GreenAgent):
                 # Build args for this task split
                 args = build_args_from_config(req.config, task_split)
                 ckpt_path = f"/tmp/car_bench_eval_{task_split}.json"
+                
+                # Clean up any existing checkpoint file to avoid JSON parse errors
+                if os.path.exists(ckpt_path):
+                    os.remove(ckpt_path)
+                    eval_logger.debug("Removed existing checkpoint file", path=ckpt_path)
                 
                 # Run in executor to avoid blocking async event loop
                 loop = asyncio.get_event_loop()

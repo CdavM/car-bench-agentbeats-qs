@@ -1,6 +1,7 @@
 """Server entry point for CAR-bench evaluator agent."""
 import argparse
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -50,6 +51,20 @@ async def main():
     parser.add_argument("--port", type=int, default=8081, help="Port to bind the server")
     parser.add_argument("--card-url", type=str, help="External URL for the agent card")
     args = parser.parse_args()
+
+    # Auto-configure CAR_BENCH_DATA_DIR if not set
+    if "CAR_BENCH_DATA_DIR" not in os.environ:
+        # Default to scenarios/car-bench/car-bench/mock_data if it exists
+        project_root = Path(__file__).parent.parent.parent
+        default_data_dir = project_root / "scenarios" / "car-bench" / "car-bench" / "car_bench" / "envs" / "car_voice_assistant" / "mock_data"
+        if default_data_dir.exists():
+            os.environ["CAR_BENCH_DATA_DIR"] = str(default_data_dir)
+            logger.info(f"Auto-configured CAR_BENCH_DATA_DIR={default_data_dir}")
+        else:
+            logger.warning(
+                f"CAR_BENCH_DATA_DIR not set and default path not found: {default_data_dir}. "
+                "Run ./scenarios/car-bench/setup.sh to download data."
+            )
 
     agent_url = args.card_url or f"http://{args.host}:{args.port}/"
 

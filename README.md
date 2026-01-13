@@ -54,19 +54,19 @@ See [LOCAL_TESTING.md](LOCAL_TESTING.md) for complete documentation.
 This approach builds and runs everything in Docker, matching the production environment:
 
 ```bash
-# 1. Install Python dependencies for generate_compose.py
-pip install tomli tomli-w
+# 1. Install dependencies and download data
+uv sync --extra car-bench-agent --extra car-bench-evaluator
+./scenarios/car-bench/setup.sh
 
 # 2. Set up environment variables
-cp .env.example .env
+cp sample.env .env
 # Edit .env with your API keys:
 #   ANTHROPIC_API_KEY=sk-ant-...
 #   OPENAI_API_KEY=sk-...
 #   GEMINI_API_KEY=...
-#   AGENT_LLM=anthropic/claude-haiku-4-5-20251001
 
 # 3. Generate docker-compose.yml and run
-python3 generate_compose.py --scenario scenarios/scenario-docker-local.toml
+python generate_compose.py --scenario scenarios/scenario-docker-local.toml
 mkdir -p output
 docker compose up --abort-on-container-exit
 
@@ -85,28 +85,18 @@ cat output/results.json
 Run agents directly on your machine without Docker - fastest for iterative development:
 
 ```bash
-# 1. Install dependencies
-pip install -e .
-pip install -e external/car_bench
+# 1. Install dependencies and download data
+uv sync --extra car-bench-agent --extra car-bench-evaluator
+./scenarios/car-bench/setup.sh
 
 # 2. Set up environment
-cp .env.example .env
+cp sample.env .env
 # Edit .env with your API keys
 
-# 3. In terminal 1: Start purple agent
-python src/purple_car_bench_agent/server.py \
-    --host 127.0.0.1 --port 8080 \
-    --agent-llm anthropic/claude-haiku-4-5-20251001
+# 3. Run evaluation
+uv run agentbeats-run scenarios/scenario.toml
 
-# 4. In terminal 2: Start green evaluator
-python src/green_car_bench_agent/server.py \
-    --host 127.0.0.1 --port 8081
-
-# 5. In terminal 3: Run evaluation
-python src/agentbeats/run_scenario.py \
-    --scenario scenarios/scenario.toml
-
-# 6. View results
+# 4. View results
 cat results.json
 ```
 
