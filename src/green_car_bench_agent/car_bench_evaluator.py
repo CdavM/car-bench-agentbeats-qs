@@ -274,7 +274,7 @@ def calculate_evaluation_results(
     car_bench_repo = Path(__file__).parent.parent.parent / "scenarios" / "car-bench" / "car-bench"
     sys.path.insert(0, str(car_bench_repo))
     try:
-        from analyze_results import (
+        from analyze_results_v2 import (
             organize_data_by_task_and_trial,
             calculate_pass_power_k_scores,
             calculate_pass_at_k_scores,
