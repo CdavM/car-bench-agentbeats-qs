@@ -453,14 +453,14 @@ def calculate_average_metrics_across_splits(
     return pass_power_k_scores, pass_at_k_scores
 
 
-def build_args_from_config(config: dict, task_split: str) -> argparse.Namespace:
-    """Convert evaluation config to run() arguments for a specific task split."""
+def build_args_from_config(config: dict, task_type: str) -> argparse.Namespace:
+    """Convert evaluation config to run() arguments for a specific task type."""
     return argparse.Namespace(
         env="car_voice_assistant",
-        task_split=task_split,
-        start_index=config.get(f"tasks_{task_split}_start_index", 0),
-        end_index=config.get(f"tasks_{task_split}_end_index", -1),
-        task_ids=None,
+        task_type=task_type,
+        task_split=config.get("task_split", "test"),
+        num_tasks=config.get(f"tasks_{task_type}_num_tasks", -1),
+        task_id_filter=config.get(f"tasks_{task_type}_task_id_filter", None),
         num_trials=config.get("num_trials", 1),
         max_concurrency=1,  # Sequential to avoid overloading purple agent
         # User simulator settings
@@ -538,41 +538,52 @@ class CARBenchEvaluator(GreenAgent):
         }
         
         try:
-            # Run each task split
-            for task_split in ["base", "hallucination", "disambiguation"]:
-                start_key = f"tasks_{task_split}_start_index"
-                end_key = f"tasks_{task_split}_end_index"
+            # Run each task type (base, hallucination, disambiguation)
+            for task_type in ["base", "hallucination", "disambiguation"]:
+                num_tasks_key = f"tasks_{task_type}_num_tasks"
+                task_id_filter_key = f"tasks_{task_type}_task_id_filter"
                 
                 # Skip if not configured
-                if start_key not in req.config:
+                if num_tasks_key not in req.config and task_id_filter_key not in req.config:
                     eval_logger.info(
-                        "Skipping task split (not configured)",
-                        task_split=task_split
+                        "Skipping task type (not configured)",
+                        task_type=task_type
                     )
                     continue
                 
-                start_idx = req.config.get(start_key, 0)
-                end_idx = req.config.get(end_key, -1)
-                split_logger = logger.bind(role="evaluator", context=f"split:{task_split}")
+                split_logger = logger.bind(role="evaluator", context=f"type:{task_type}")
+                
+                # Build args for this task type
+                args = build_args_from_config(req.config, task_type)
+                
+                # Log task configuration
+                task_desc = f"{task_type} tasks (split={args.task_split}"
+                if args.task_id_filter:
+                    task_desc += f", ids={args.task_id_filter}"
+                elif args.num_tasks > 0:
+                    task_desc += f", first {args.num_tasks} tasks"
+                else:
+                    task_desc += ", all tasks"
+                task_desc += ")"
+                
                 split_logger.info(
-                    "Starting task split evaluation",
-                    task_split=task_split,
-                    start_index=start_idx,
-                    end_index=end_idx,
+                    "Starting task type evaluation",
+                    task_type=task_type,
+                    task_split=args.task_split,
+                    num_tasks=args.num_tasks,
+                    task_id_filter=args.task_id_filter,
                     num_trials=req.config.get("num_trials", 1)
                 )
                 
                 await updater.update_status(
                     TaskState.working,
                     new_agent_text_message(
-                        f"Starting evaluation on car_voice_assistant environment, split: {task_split} "
-                        f"(tasks {start_idx} to {end_idx})"
+                        f"Starting evaluation: {task_desc}"
                     )
                 )
                 
-                # Build args for this task split
-                args = build_args_from_config(req.config, task_split)
-                ckpt_path = f"/tmp/car_bench_eval_{task_split}.json"
+                # Build checkpoint path
+                ckpt_path = f"/tmp/car_bench_eval_{task_type}_{args.task_split}.json"
                 
                 # Clean up any existing checkpoint file to avoid JSON parse errors
                 if os.path.exists(ckpt_path):
@@ -590,13 +601,13 @@ class CARBenchEvaluator(GreenAgent):
                 )
                 
                 all_results.extend(results)
-                results_by_split[task_split].extend(results)
+                results_by_split[task_type].extend(results)
                 
                 # Log completion with summary stats
                 split_reward = sum(r.reward for r in results)
                 split_logger.info(
-                    "Completed task split",
-                    task_split=task_split,
+                    "Completed task type",
+                    task_type=task_type,
                     num_tasks=len(results),
                     total_reward=split_reward,
                     pass_rate=f"{(split_reward / len(results) * 100) if results else 0:.1f}%"

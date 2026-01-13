@@ -71,9 +71,11 @@ cat output/results.json
 The benchmark is configured via `scenarios/scenario.toml` and `scenarios/scenario-docker-local.toml`:
 
 - **num_trials**: Number of times to run each task (for pass@k metrics)
-- **tasks_base_start_index** / **tasks_base_end_index**: Range of base tasks to run
-- **tasks_hallucination_start_index** / **tasks_hallucination_end_index**: Range of hallucination tasks
-- **tasks_disambiguation_start_index** / **tasks_disambiguation_end_index**: Range of disambiguation tasks
+- **task_split**: Which dataset split to use (`"train"` or `"test"`)
+- **tasks_base_num_tasks**: Number of base tasks to run (first N tasks, -1 for all)
+- **tasks_hallucination_num_tasks**: Number of hallucination tasks to run
+- **tasks_disambiguation_num_tasks**: Number of disambiguation tasks to run
+- **tasks_*_task_id_filter**: Alternative to num_tasks - specify exact task IDs (e.g., `["base_0", "base_2"]`)
 - **max_steps**: Maximum conversation turns per task
 
 ## Data Directory Override

@@ -160,9 +160,15 @@ env = {
 }
 
 [config]
-num_trials = 2
-tasks_base_start_index = 0
-taskLocal Testing vs Production
+num_trials = 3
+task_split = "test"  # "train" or "test"
+tasks_base_num_tasks = 2  # First N tasks in type/split, -1 for all
+tasks_hallucination_num_tasks = 0
+tasks_disambiguation_num_tasks = 0
+max_steps = 50
+```
+
+### Local Testing vs Production
 
 | Aspect | Local Testing | GitHub Actions (Production) |
 |--------|--------------|----------------------------|
@@ -219,9 +225,13 @@ env = {
 }
 
 [config]
-num_trials = 2
-tasks_base_start_index = 0
-tasks_base_end_index = 3  # Use small number for quick local tests
+num_trials = 3
+task_split = "test"  # "train" or "test"
+tasks_base_num_tasks = 2  # First N tasks, -1 for all
+tasks_hallucination_num_tasks = 0
+tasks_disambiguation_num_tasks = 0
+# Alternative: tasks_base_task_id_filter = ["base_0", "base_2"]
+max_steps = 50  # Use small numbers for quick local tests
 ```
 
 # 3. Generate docker-compose.yml
@@ -255,7 +265,24 @@ env = {
     LOGURU_LEVEL = "${LOGURU_LEVEL}"
 }
 
-[[p🚀 Deploying to Production
+[[participants]]
+image = "purple-agent:latest"
+name = "agent"
+env = { 
+    ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY}",
+    AGENT_LLM = "anthropic/claude-haiku-4-5-20251001"
+}
+
+[config]
+num_trials = 3
+task_split = "test"
+tasks_base_num_tasks = 2
+tasks_hallucination_num_tasks = 0
+tasks_disambiguation_num_tasks = 0
+max_steps = 50
+```
+
+## 🚀 Deploying to Production
 
 ### 1. Build and Publish Docker Images
 
@@ -296,12 +323,15 @@ env = {
 }
 
 [config]
-num_trials = 2
-tasks_base_start_index = 0
-tasks_base_end_index = 10  # Full evaluation in production
+num_trials = 3
+task_split = "test"  # "train" or "test"
+tasks_base_num_tasks = -1  # -1 for all tasks
+tasks_hallucination_num_tasks = -1
+tasks_disambiguation_num_tasks = -1
+max_steps = 50  # Full evaluation in production
 ```
 
-## 🚀 Deploying to ProducANTHROPIC_API_KEY \
+### 3. Run Assessment \
   purple-agent:latest
 
 # Start green evaluator
