@@ -1,13 +1,12 @@
 name: Publish Agents
 
-# Workflow temporarily disabled - uncomment the 'on:' section below to re-enable
-# on:
-#   push:
-#     branches:
-#       - main
-#     tags:
-#       - 'v*'  # Trigger on version tags like v1.0.0, v1.1.0
-on: workflow_dispatch  # Only allow manual triggering
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.1.0
+# on: workflow_dispatch  # Only allow manual triggering
 
 jobs:
   publish:
