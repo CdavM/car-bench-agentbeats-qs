@@ -95,6 +95,14 @@ def create_remote_agent_factory(agent_url: str):
                 # Extract last user message
                 last_user_msg = state.messages[-1]["content"]
                 
+                # Handle empty messages - replace with placeholder to avoid LLM errors
+                if not last_user_msg or not last_user_msg.strip():
+                    logger.warning(
+                        "Empty user message detected, using placeholder 'none'",
+                        message_index=len(state.messages) - 1
+                    )
+                    last_user_msg = "none"
+                
                 # Build proper A2A message with Parts
                 if self._is_first_message:
                     # First message: combine system prompt and user message in one TextPart,
