@@ -9,7 +9,9 @@
 
 [![Paper](https://img.shields.io/badge/Paper-Coming%20Soon-orange.svg)](#citation)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![AgentBeats](https://img.shields.io/badge/AgentBeats-Compatible-green.svg)](https://agentbeats.dev)
+[![YouTube](https://img.shields.io/badge/YouTube-Demo-red.svg?logo=youtube)](https://youtu.be/jnS8R59XEWA)
+[![AgentBeats](https://img.shields.io/badge/AgentBeats-Green%20Agent-green.svg)](https://agentbeats.dev/johanneskirmayr/car-bench-evaluator)
+[![AgentBeats](https://img.shields.io/badge/AgentBeats-Purple%20Agent-purple.svg)](https://agentbeats.dev/johanneskirmayr/car-bench-agent)
 
 *Evaluation framework for CAR-bench using the A2A protocol and AgentBeats platform*
 
@@ -297,7 +299,7 @@ env = {
 
 ### Metrics: Multi-Dimensional Scoring
 
-Each task is evaluated across **6 automated metrics** corresponding to its task type:
+Each task is evaluated across up to **6 automated metrics** corresponding to its task type:
 
 #### Base Tasks (100 tasks)
 - `r_actions_final` (0/1): Did agent reach the correct final environment state through its actions? - Code-Based.
@@ -312,13 +314,13 @@ Each task is evaluated across **6 automated metrics** corresponding to its task 
 #### Hallucination Tasks (98 tasks)
 - `r_tool_execution_errors` (0/1)
 - `r_policy_errors` (0/1)
-- `r_user_end_conversation` (0/1): **Critical**—1.0 if agent acknowledges inability, 0.0 if hallucinates. - LLM-as-a-Judge-Based.
+- `r_user_end_conversation` (0/1): **Critical**—1.0 if agent acknowledges inability, 0.0 if hallucinates. - LLM-as-a-Judge-Based (with clear instructions/context).
 
 **Task reward**: 1 if all metrics are 1, else 0
 
 #### Disambiguation Tasks (56 tasks)
 - All base metrics **+**
-- `r_user_end_conversation` (0.0-1.0): **Critical**—0.0 if agent acts without clarifying OR asks when unnecessary - LLM-as-a-Judge-Based.
+- `r_user_end_conversation` (0.0-1.0): **Critical**—0.0 if agent acts without clarifying OR asks when unnecessary - LLM-as-a-Judge-Based (with clear instructions/context).
 
 **Task reward**: 1 if all metrics are 1, else 0
 
@@ -392,6 +394,9 @@ Want to build and test your own agent? **Replace the purple agent** while keepin
 
 - 🔗 **Original CAR-bench**: [github.com/CAR-bench/car-bench](https://github.com/CAR-bench/car-bench)
 - 🏆 **Leaderboard**: [github.com/CAR-bench/car-bench-leaderboard-agentbeats](https://github.com/CAR-bench/car-bench-leaderboard-agentbeats)
+- 🟩 **Green Agent (CAR-bench Evaluator)**: [agentbeats.dev/johanneskirmayr/car-bench-evaluator](https://agentbeats.dev/johanneskirmayr/car-bench-evaluator)
+- 🟪 **Purple Agent (Template Agent)**: [agentbeats.dev/johanneskirmayr/car-bench-agent](https://agentbeats.dev/johanneskirmayr/car-bench-agent)
+- 🎥 **YouTube Demo**: [youtu.be/jnS8R59XEWA](https://youtu.be/jnS8R59XEWA)
 - 🌐 **AgentBeats Platform**: [agentbeats.dev](https://agentbeats.dev)
 - 📖 **A2A Protocol**: [a2a-protocol.org](https://a2a-protocol.org)
 
