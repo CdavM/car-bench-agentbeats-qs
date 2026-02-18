@@ -574,12 +574,31 @@ scenarios/car-bench/car-bench/     # Original CAR-bench (manually cloned in step
 
 ## Building Custom Agents
 
-Want to build and test your own agent? **Replace the purple agent** while keeping the green agent unchanged:
+Want to build and test your own agent? The purple agent is the **agent under test**: it receives tasks from the green agent (CAR-bench evaluator) via the **A2A protocol** and responds with tool calls or text.
 
-### Steps
+� **[Full Development Guide →](src/purple_car_bench_agent/DEVELOPMENT_GUIDE.md)** — Covers the message protocol, conversation lifecycle, and everything you need to implement a custom agent.
 
-1. **Implement A2A server** following the purple agent interface ([`src/purple_car_bench_agent/car_bench_agent.py`](src/purple_car_bench_agent/car_bench_agent.py))
-2. **Update scenario file** to point to your agent
+### Quick Summary
+
+| Concept | Details |
+|---------|---------|
+| **Protocol** | A2A (Agent-to-Agent) using `TextPart` and `DataPart` message parts |
+| **First message** | `TextPart` with system prompt + user message, `DataPart` with tool definitions |
+| **Subsequent messages** | `TextPart` with either tool results (`"Tool: ...\nResult: ..."`) or next user utterance |
+| **Response format** | `TextPart` (text), `DataPart` (tool calls via `ToolCallsData`), or both |
+| **State management** | Maintain conversation history per `context_id` |
+
+### Reference Implementation
+
+The baseline agent in [`src/purple_car_bench_agent/`](src/purple_car_bench_agent/) demonstrates all of this:
+
+| File | Purpose |
+|------|---------|
+| [`car_bench_agent.py`](src/purple_car_bench_agent/car_bench_agent.py) | Agent logic — message parsing, LLM calls, response building |
+| [`tool_call_types.py`](src/purple_car_bench_agent/tool_call_types.py) | `ToolCall` and `ToolCallsData` Pydantic models |
+| [`server.py`](src/purple_car_bench_agent/server.py) | HTTP server setup and `AgentCard` configuration |
+
+You can use **any LLM provider or framework** — the only requirement is conforming to the A2A message protocol.
 
 ---
 
