@@ -120,12 +120,25 @@ cd car-bench-agentbeats
 ```
 
 ```bash
-# 2. Install dependencies
+# 2. Create virtual environment with Python 3.11+
+python3.11 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+```bash
+# 3. Clone the CAR-bench repository
+./scenarios/car-bench/setup.sh
+```
+
+This will clone the car-bench repository to `scenarios/car-bench/car-bench/`. Tasks and mock data are automatically loaded from HuggingFace.
+
+```bash
+# 4. Install dependencies
 uv sync --extra car-bench-agent --extra car-bench-evaluator
 ```
 
 ```bash
-# 3. Configure API keys
+# 5. Configure API keys
 cp .env.example .env
 # Edit .env with your keys:
 #   ANTHROPIC_API_KEY=sk-ant-...
@@ -552,7 +565,7 @@ scenarios/
 ├── scenario-docker-local.toml     # Local Docker build config
 └── scenario-ghcr.toml             # Published images config
 
-scenarios/car-bench/car-bench/     # Original CAR-bench (git submodule - cloned via 'uv sync')
+scenarios/car-bench/car-bench/     # Original CAR-bench (manually cloned in step 2)
 └── car_bench/                     # Environment, tools, user simulator, mock data (130K POIs, 1.7M routes, etc.)
     ├── envs/                      # Environment, tools, user simulator
 ```

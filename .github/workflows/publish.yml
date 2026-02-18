@@ -38,18 +38,6 @@ jobs:
           repository: CAR-bench/car-bench
           path: scenarios/car-bench/car-bench
 
-      - name: Download CAR-bench data files
-        working-directory: scenarios/car-bench/car-bench
-        run: |
-          # Download navigation mock data from releases
-          DATA_VERSION="v1.0.0"
-          DOWNLOAD_URL="https://github.com/CAR-bench/car-bench/releases/download/${DATA_VERSION}/navigation_mock_data.zip"
-          
-          curl -L "$DOWNLOAD_URL" -o navigation_mock_data.zip
-          
-          unzip -o navigation_mock_data.zip -d car_bench/envs/car_voice_assistant/mock_data/navigation/
-          rm navigation_mock_data.zip
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
