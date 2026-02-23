@@ -9,14 +9,15 @@ from a2a.types import Message, Part, Role, TextPart, DataPart
 DEFAULT_TIMEOUT = 300
 
 
-def create_message_with_parts(*, role: Role = Role.user, parts: list[Part], context_id: str | None = None) -> Message:
+def create_message_with_parts(*, role: Role = Role.user, parts: list[Part], context_id: str | None = None, task_id: str | None = None) -> Message:
     """Create a message with custom parts."""
     return Message(
         kind="message",
         role=role,
         parts=parts,
         message_id=uuid4().hex,
-        context_id=context_id
+        context_id=context_id,
+        task_id=task_id,
     )
 
 
@@ -30,13 +31,13 @@ def merge_parts(parts: list[Part]) -> str:
     return "\n".join(chunks)
 
 
-def send_message_with_parts_sync(parts: list[Part], base_url: str, context_id: str | None = None) -> dict:
+def send_message_with_parts_sync(parts: list[Part], base_url: str, context_id: str | None = None, task_id: str | None = None) -> dict:
     """Send a message with custom parts synchronously. Safe for use in thread pools.
     
-    Returns dict with context_id, response and status (if exists)
+    Returns dict with context_id, task_id, response and status (if exists)
     """
     # Create the message
-    outbound_msg = create_message_with_parts(parts=parts, context_id=context_id)
+    outbound_msg = create_message_with_parts(parts=parts, context_id=context_id, task_id=task_id)
     
     # Prepare JSON-RPC request
     jsonrpc_request = {
@@ -68,6 +69,7 @@ def send_message_with_parts_sync(parts: list[Part], base_url: str, context_id: s
         outputs = {
             "response": "",
             "context_id": None,
+            "task_id": None,
             "raw_message": None
         }
         
@@ -76,6 +78,7 @@ def send_message_with_parts_sync(parts: list[Part], base_url: str, context_id: s
             # Direct message response
             msg = Message.model_validate(response_data)
             outputs["context_id"] = msg.context_id
+            outputs["task_id"] = msg.task_id
             outputs["response"] = merge_parts(msg.parts)
             outputs["raw_message"] = msg
         elif response_data.get("kind") == "task":
@@ -83,6 +86,7 @@ def send_message_with_parts_sync(parts: list[Part], base_url: str, context_id: s
             from a2a.types import Task
             task = Task.model_validate(response_data)
             outputs["context_id"] = task.context_id
+            outputs["task_id"] = task.id
             outputs["status"] = task.status.state.value
             if task.status.message:
                 outputs["response"] = merge_parts(task.status.message.parts)
