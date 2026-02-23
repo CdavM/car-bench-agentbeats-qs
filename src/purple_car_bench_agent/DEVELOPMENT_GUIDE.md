@@ -85,20 +85,26 @@ After the first turn, each message contains **one TextPart**. The content depend
 
 #### Alternative A: Tool Execution Results
 
-If your agent called tools in its previous response, the green agent executes them against the CAR-bench environment and returns the results as text:
+If your agent called tools in its previous response, the green agent executes them against the CAR-bench environment and returns the results as a **`DataPart`** with structured tool results:
 
-```
-Tool: <tool_name>
-Result: <json_result>
+```json
+{
+  "tool_results": [
+    {
+      "tool_name": "get_current_location",
+      "tool_call_id": "call_abc123",
+      "content": "{\"latitude\": 48.1351, \"longitude\": 11.5820, \"city\": \"Munich\"}"
+    },
+    {
+      "tool_name": "get_weather",
+      "tool_call_id": "call_def456",
+      "content": "{\"temperature\": 15, \"condition\": \"sunny\"}"
+    }
+  ]
+}
 ```
 
-For example:
-```
-Tool: get_current_location
-Result: {'latitude': 48.1351, 'longitude': 11.5820, 'city': 'Munich'}
-```
-
-If your agent called **multiple tools**, all results are included in a single TextPart (concatenated).
+Each entry in `tool_results` includes the `tool_name` and `content` (the execution result), allowing your agent to match each result to the corresponding tool call from its previous response. The baseline agent matches results by `tool_name` against the previous turn's tool calls.
 
 #### Alternative B: User Follow-up
 
@@ -158,10 +164,10 @@ If your LLM produces reasoning/thinking output (e.g., Claude extended thinking),
 Turn 1:  Green → Purple:  TextPart(System + User) + DataPart(tools)
          Purple → Green:  TextPart(text) + DataPart(tool_calls)
 
-Turn 2:  Green → Purple:  TextPart(tool results)
+Turn 2:  Green → Purple:  DataPart(tool results)
          Purple → Green:  TextPart(text) + DataPart(tool_calls)
 
-Turn 3:  Green → Purple:  TextPart(tool results)
+Turn 3:  Green → Purple:  DataPart(tool results)
          Purple → Green:  TextPart(final answer)      ← no tool calls = done
 
 Turn 4:  Green → Purple:  TextPart(next user utterance)

@@ -61,6 +61,7 @@ class CARBenchAgentExecutor(AgentExecutor):
 
         # Parse the incoming A2A Message with Parts
         user_message_text = None
+        incoming_tool_results = None  # Structured tool results from green agent
         
         try:
             for part in inbound_message.parts:
@@ -79,21 +80,25 @@ class CARBenchAgentExecutor(AgentExecutor):
                         user_message_text = text
                 
                 elif isinstance(part.root, DataPart):
-                    # Extract tools from DataPart
+                    # Extract tools or tool results from DataPart
                     data = part.root.data
                     if "tools" in data:
                         tools = data["tools"]
                         self.ctx_id_to_tools[context.context_id] = tools
+                    elif "tool_results" in data:
+                        # Structured tool results from the green agent
+                        incoming_tool_results = data["tool_results"]
             
-            # Fallback if no text part found
-            if not user_message_text:
+            # Fallback if no text part and no structured tool results found
+            if not user_message_text and not incoming_tool_results:
                 user_message_text = context.get_user_input()
             
             ctx_logger.info(
                 "Received user message",
                 context_id=context.context_id[:8],
                 turn=len(messages) + 1,
-                message_preview=user_message_text[:100] if user_message_text else ""
+                message_preview=(user_message_text[:100] if user_message_text else
+                                 f"[{len(incoming_tool_results)} tool results]" if incoming_tool_results else "")
             )
             ctx_logger.debug(
                 "Message details",
@@ -101,7 +106,9 @@ class CARBenchAgentExecutor(AgentExecutor):
                 message=user_message_text,
                 num_parts=len(inbound_message.parts),
                 has_tools=bool(tools),
-                num_tools=len(tools) if tools else 0
+                num_tools=len(tools) if tools else 0,
+                has_tool_results=bool(incoming_tool_results),
+                num_tool_results=len(incoming_tool_results) if incoming_tool_results else 0
             )
             
         except Exception as e:
@@ -110,19 +117,50 @@ class CARBenchAgentExecutor(AgentExecutor):
 
         # Check if previous message had tool calls - if so, format as tool results
         if messages and messages[-1].get("role") == "assistant" and messages[-1].get("tool_calls"):
-            # This message contains tool results - format them for Claude
-            tool_call_ids = [tc["id"] for tc in messages[-1]["tool_calls"]]
-            
-            # Parse tool results from the user message
-            # CAR-bench sends tool results as text like "Tool: get_location\nResult: {...}"
-            # We need to match each result with its tool_call_id
-            tool_results = []
-            for i, tool_call in enumerate(messages[-1]["tool_calls"]):
-                tool_results.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call["id"],
-                    "content": user_message_text  # For now, send full message to each tool
-                })
+            prev_tool_calls = messages[-1]["tool_calls"]
+
+            if incoming_tool_results:
+                # Structured tool results from green agent — match each result
+                # to its corresponding tool_call_id by tool name
+                tool_call_by_name = {}
+                for tc in prev_tool_calls:
+                    name = tc["function"]["name"]
+                    # If multiple calls to the same tool, use a list
+                    tool_call_by_name.setdefault(name, []).append(tc)
+
+                tool_results = []
+                for tr in incoming_tool_results:
+                    tr_name = tr.get("tool_name", "")
+                    matching_calls = tool_call_by_name.get(tr_name, [])
+                    if matching_calls:
+                        # Pop the first matching call to handle duplicate tool names
+                        matched_tc = matching_calls.pop(0)
+                        tool_results.append({
+                            "role": "tool",
+                            "tool_call_id": matched_tc["id"],
+                            "content": tr.get("content", ""),
+                        })
+                    else:
+                        # Fallback: no matching tool_call found, use first unmatched
+                        ctx_logger.warning(
+                            "No matching tool_call_id for tool result",
+                            tool_name=tr_name,
+                        )
+                        tool_results.append({
+                            "role": "tool",
+                            "tool_call_id": tr.get("tool_call_id", f"unknown_{tr_name}"),
+                            "content": tr.get("content", ""),
+                        })
+            else:
+                # Fallback: no structured tool results, use the text message
+                # for all tool calls (legacy behavior)
+                tool_results = []
+                for tc in prev_tool_calls:
+                    tool_results.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": user_message_text or "",
+                    })
             
             # Add all tool result messages
             messages.extend(tool_results)
@@ -138,9 +176,11 @@ class CARBenchAgentExecutor(AgentExecutor):
 
         # Call LLM with native tool calling
         try:
-            # Configure prompt caching
-            tools[-1]["function"]["cache_control"] = {"type": "ephemeral"} # tools
-            messages[0]["cache_control"] = {"type": "ephemeral"} # system prompt
+            # Configure prompt caching (guard against empty lists)
+            if tools:
+                tools[-1]["function"]["cache_control"] = {"type": "ephemeral"}
+            if messages:
+                messages[0]["cache_control"] = {"type": "ephemeral"}
 
             completion_kwargs = {
                 "model": self.model,

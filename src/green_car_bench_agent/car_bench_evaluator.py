@@ -92,7 +92,15 @@ def create_remote_agent_factory(agent_url: str):
                 """Generate next message by calling remote purple agent."""
                 import asyncio
                 
-                # Extract last user message
+                # Collect trailing tool result messages (there may be multiple from parallel tool calls)
+                tool_result_messages = []
+                for msg in reversed(state.messages):
+                    if msg.get("role") == "tool":
+                        tool_result_messages.insert(0, msg)
+                    else:
+                        break
+                
+                # Extract last user/tool message content
                 last_user_msg = state.messages[-1]["content"]
                 
                 # Handle empty messages - replace with placeholder to avoid LLM errors
@@ -123,8 +131,23 @@ def create_remote_agent_factory(agent_url: str):
                             kind="data",
                             data={"tools": tools_info}
                         )))
+                elif len(tool_result_messages) > 0:
+                    # Tool result turn: send individual results as structured DataPart
+                    # so the purple agent can match each result to its tool_call_id
+                    tool_results_data = [
+                        {
+                            "tool_name": msg.get("name", ""),
+                            "tool_call_id": msg.get("tool_call_id", ""),
+                            "content": msg.get("content", ""),
+                        }
+                        for msg in tool_result_messages
+                    ]
+                    parts = [Part(root=DataPart(
+                        kind="data",
+                        data={"tool_results": tool_results_data}
+                    ))]
                 else:
-                    # Subsequent messages: just the user message
+                    # Regular user message
                     parts = [Part(root=TextPart(
                         kind="text",
                         text=last_user_msg
