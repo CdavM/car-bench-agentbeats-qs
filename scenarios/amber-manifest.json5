@@ -1,0 +1,43 @@
+{
+  manifest_version: "0.1.0",
+  program: {
+    image: "ghcr.io/car-bench/car-bench-agentbeats-car-bench-evaluator:latest",
+    entrypoint: [
+      "python src/green_car_bench_agent/server.py",
+    ],
+    env: {
+      TASK_SPLIT: "${config.task_split}",
+      NUM_TRIALS: "${config.num_trials}",
+      TASKS_BASE_NUM_TASKS: "${config.tasks_base_num_tasks}",
+      TASKS_HALLUCINATION_NUM_TASKS: "${config.tasks_hallucination_num_tasks}",
+      TASKS_DISAMBIGUATION_NUM_TASKS: "${config.tasks_disambiguation_num_tasks}",
+      MAX_STEPS: "${config.max_steps}",
+    },
+    network: {
+      endpoints: [
+        { name: "endpoint", protocol: "http", port: 8081 },
+      ],
+    },
+  },
+  config_schema: {
+    type: "object",
+    properties: {
+      task_split: { type: "string", enum: ["trial", "test"] },
+      num_trials: { type: "integer", minimum: 1 },
+      tasks_base_num_tasks: { type: "integer", minimum: -1 },
+      tasks_hallucination_num_tasks: { type: "integer", minimum: -1 },
+      tasks_disambiguation_num_tasks: { type: "integer", minimum: -1 },
+      max_steps: { type: "integer", minimum: 1 },
+    },
+    required: ["task_split", "num_trials", "tasks_base_num_tasks", "tasks_hallucination_num_tasks", "tasks_disambiguation_num_tasks", "max_steps"],
+    additionalProperties: false,
+  },
+  slots: {
+  },
+  provides: {
+    results: { kind: "a2a", endpoint: "endpoint" },
+  },
+  exports: {
+    agent: "results",
+  },
+}
