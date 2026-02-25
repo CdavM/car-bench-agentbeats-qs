@@ -38,10 +38,8 @@
   },
   provides: {
     a2a: { kind: "a2a", endpoint: "endpoint" },
-    results: { kind: "a2a", endpoint: "endpoint" },
   },
   exports: {
     a2a: "a2a",
-    agent: "results",
   },
 }
