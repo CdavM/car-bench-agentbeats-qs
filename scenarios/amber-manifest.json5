@@ -12,6 +12,7 @@
       TASKS_HALLUCINATION_NUM_TASKS: "${config.tasks_hallucination_num_tasks}",
       TASKS_DISAMBIGUATION_NUM_TASKS: "${config.tasks_disambiguation_num_tasks}",
       MAX_STEPS: "${config.max_steps}",
+      PROXY_URL: "${slots.proxy.url}"
     },
     network: {
       endpoints: [
@@ -33,11 +34,14 @@
     additionalProperties: false,
   },
   slots: {
+    proxy: { kind: "a2a" },
   },
   provides: {
+    a2a: { kind: "a2a", endpoint: "endpoint" },
     results: { kind: "a2a", endpoint: "endpoint" },
   },
   exports: {
+    a2a: "a2a",
     agent: "results",
   },
 }
