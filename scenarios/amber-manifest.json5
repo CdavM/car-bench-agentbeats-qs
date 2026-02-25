@@ -3,7 +3,7 @@
   program: {
     image: "ghcr.io/car-bench/car-bench-agentbeats-car-bench-evaluator:latest",
     entrypoint: [
-      "python src/green_car_bench_agent/server.py",
+      "python src/green_car_bench_agent/server.py --host 0.0.0.0 --port 8081",
     ],
     env: {
       TASK_SPLIT: "${config.task_split}",
@@ -16,7 +16,7 @@
     },
     network: {
       endpoints: [
-        { name: "endpoint", protocol: "http", port: 8081 },
+        { name: "endpoint", port: 8081 },
       ],
     },
   },
