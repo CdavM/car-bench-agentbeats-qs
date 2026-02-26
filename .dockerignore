@@ -1,4 +1,4 @@
-.env
+scenarios/.env
 .DS_Store
 .python-version
 .venv
