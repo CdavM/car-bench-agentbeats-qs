@@ -3,11 +3,18 @@
   program: {
     image: "ghcr.io/car-bench/car-bench-agentbeats-car-bench-agent:latest",
     entrypoint: [
-      "python src/purple_car_bench_agent/server.py --host 0.0.0.0 --port 8080",
+      "uv", 
+      "run", 
+      "src/purple_car_bench_agent/server.py", 
+      "--host", 
+      "0.0.0.0", 
+      "--port", 
+      "8080"
     ],
     env: {
       AGENT_LLM: "${config.agent_llm}",
-      PROXY_URL: "${slots.proxy.url}"
+      PROXY_URL: "${slots.proxy.url}",
+      ANTHROPIC_API_KEY: "${config.anthropic_api_key}",
     },
     network: {
       endpoints: [
@@ -19,8 +26,9 @@
     type: "object",
     properties: {
       agent_llm: { type: "string" },
+      anthropic_api_key: { type: "string", secret: true },
     },
-    required: ["agent_llm"],
+    required: ["agent_llm", "anthropic_api_key"],
     additionalProperties: false,
   },
   slots: {

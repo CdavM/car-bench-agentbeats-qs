@@ -1,0 +1,62 @@
+{
+  manifest_version: "0.1.0",
+  config_schema: {
+    type: "object",
+    properties: {
+      google_api_key: { type: "string", secret: true },
+      anthropic_api_key: { type: "string", secret: true },
+      agent_llm: { type: "string" },
+    },
+    required: ["google_api_key", "agent_llm", "anthropic_api_key"],
+    additionalProperties: false,
+  },
+  components: {
+    gateway: {
+      manifest: "https://raw.githubusercontent.com/staverm/amber-runner/refs/heads/main/examples/debate-proxy/gateway.json5",
+      config: {
+        assessment_config: {
+          topic: "CAR-Bench evaluation tasks",
+          task_split: "test",
+          num_trials: 3,
+          tasks_base_num_tasks: -1,
+          tasks_hallucination_num_tasks: -1,
+          tasks_disambiguation_num_tasks: -1,
+          max_steps: 50
+        },
+        participant_roles: {
+          green: "evaluator",
+          purple1: "agent",
+        },
+        callback_urls: {
+          green: "${bindings.green-proxy.url}",
+        },
+      },
+    },
+    green: {
+      manifest: "./amber-manifest.json5",
+      config: {
+        gemini_api_key: "${config.google_api_key}",
+      },
+    },
+    purple_agent: {
+      manifest: "./amber-manifest-purple.json5",
+      config: {
+        agent_llm: "${config.agent_llm}",
+        anthropic_api_key: "${config.anthropic_api_key}",
+      },
+    },
+  },
+  bindings: [
+    { to: "#gateway.green", from: "#green.a2a" },
+    { to: "#gateway.purple1", from: "#purple_agent.a2a" },
+    { to: "#green.proxy", from: "#gateway.proxy", weak: true, name: "green-proxy" },
+    { to: "#purple_agent.proxy", from: "#green.a2a" },
+  ],
+  exports: { results: "#gateway.results" },
+  metadata: {
+    agentbeats_ids: {
+      "car_bench_evaluator": 1234,
+      "car_bench_agent": 567,
+    }
+  }
+}

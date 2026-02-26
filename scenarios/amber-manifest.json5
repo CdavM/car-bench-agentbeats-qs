@@ -3,16 +3,17 @@
   program: {
     image: "ghcr.io/car-bench/car-bench-agentbeats-car-bench-evaluator:latest",
     entrypoint: [
-      "python src/green_car_bench_agent/server.py --host 0.0.0.0 --port 8081",
+      "uv", 
+      "run", 
+      "src/green_car_bench_agent/server.py", 
+      "--host", 
+      "0.0.0.0", 
+      "--port", 
+      "8081"
     ],
     env: {
-      TASK_SPLIT: "${config.task_split}",
-      NUM_TRIALS: "${config.num_trials}",
-      TASKS_BASE_NUM_TASKS: "${config.tasks_base_num_tasks}",
-      TASKS_HALLUCINATION_NUM_TASKS: "${config.tasks_hallucination_num_tasks}",
-      TASKS_DISAMBIGUATION_NUM_TASKS: "${config.tasks_disambiguation_num_tasks}",
-      MAX_STEPS: "${config.max_steps}",
-      PROXY_URL: "${slots.proxy.url}"
+      PROXY_URL: "${slots.proxy.url}",
+      GEMINI_API_KEY: "${config.gemini_api_key}",
     },
     network: {
       endpoints: [
@@ -23,14 +24,9 @@
   config_schema: {
     type: "object",
     properties: {
-      task_split: { type: "string", enum: ["trial", "test"] },
-      num_trials: { type: "integer", minimum: 1 },
-      tasks_base_num_tasks: { type: "integer", minimum: -1 },
-      tasks_hallucination_num_tasks: { type: "integer", minimum: -1 },
-      tasks_disambiguation_num_tasks: { type: "integer", minimum: -1 },
-      max_steps: { type: "integer", minimum: 1 },
+      gemini_api_key: { type: "string", secret: true },
     },
-    required: ["task_split", "num_trials", "tasks_base_num_tasks", "tasks_hallucination_num_tasks", "tasks_disambiguation_num_tasks", "max_steps"],
+    required: ["gemini_api_key"],
     additionalProperties: false,
   },
   slots: {
